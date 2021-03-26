@@ -688,12 +688,6 @@ public interface Meta {
       if (List.class.isAssignableFrom(resultClazz)) {
         return LIST;
       }
-      // columns for MetaImpl internal classes do not match field names, "record" would fail
-      // can be removed once CALCITE-2489 is merged in Calcite
-      if (resultClazz.getName().startsWith("org.apache.calcite.avatica.MetaImpl")
-          && !resultClazz.getName().endsWith("MetaTable")) {
-        return ARRAY;
-      }
       return record(resultClazz, null,
           columns.stream().map(c -> c.columnName).collect(Collectors.toList()));
     }
