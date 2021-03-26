@@ -645,6 +645,16 @@ public interface Meta {
     public static final CursorFactory LIST =
         new CursorFactory(Style.LIST, null, null, null);
 
+    /**
+     *
+     * @deprecated Use {@link #record(Class, List, List)}
+     */
+    @Deprecated // to be removed before 1.19.0
+    public static CursorFactory record(Class resultClazz) {
+      List<Field> fields = Arrays.asList(resultClazz.getFields());
+      return new CursorFactory(Style.RECORD, resultClazz, fields, null);
+    }
+
     public static CursorFactory record(Class resultClass, List<Field> fields,
         List<String> fieldNames) {
       if (fields == null) {
