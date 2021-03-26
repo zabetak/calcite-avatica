@@ -89,7 +89,6 @@ public abstract class MetaImpl implements Meta {
           (Iterable<Object[]>) (Iterable) iterable;
       return new ArrayIteratorCursor(iterable1.iterator());
     case RECORD:
-    case RECORD_PROJECTION:
       @SuppressWarnings("unchecked") final Class<Object> clazz = cursorFactory.clazz;
       return new RecordIteratorCursor<>(iterable.iterator(), clazz, cursorFactory.fields);
     case LIST:
@@ -133,7 +132,6 @@ public abstract class MetaImpl implements Meta {
       }
       return list;
     case RECORD:
-    case RECORD_PROJECTION:
       final Field[] fields = cursorFactory.fields.toArray(
           new Field[cursorFactory.fields.size()]);
       for (Object o : iterable) {

@@ -608,9 +608,8 @@ public interface Meta {
 
     private CursorFactory(Style style, Class clazz, List<Field> fields,
         List<String> fieldNames) {
-      assert (fieldNames != null)
-          == (style == Style.RECORD || style == Style.RECORD_PROJECTION || style == Style.MAP);
-      assert (fields != null) == (style == Style.RECORD || style == Style.RECORD_PROJECTION);
+      assert (fieldNames != null) == (style == Style.RECORD || style == Style.MAP);
+      assert (fields != null) == (style == Style.RECORD);
       this.style = Objects.requireNonNull(style);
       this.clazz = clazz;
       this.fields = fields;
@@ -629,9 +628,7 @@ public interface Meta {
       case LIST:
         return LIST;
       case RECORD:
-        return record(Style.RECORD, clazz, null, fieldNames);
-      case RECORD_PROJECTION:
-        return record(Style.RECORD_PROJECTION, clazz, null, fieldNames);
+        return record(clazz, null, fieldNames);
       case MAP:
         return map(fieldNames);
       default:
@@ -649,12 +646,7 @@ public interface Meta {
         new CursorFactory(Style.LIST, null, null, null);
 
     public static CursorFactory record(Class resultClass, List<Field> fields,
-                                       List<String> fieldNames) {
-      return record(Style.RECORD_PROJECTION, resultClass, fields, fieldNames);
-    }
-
-    public static CursorFactory record(Style style, Class resultClass, List<Field> fields,
-                                       List<String> fieldNames) {
+        List<String> fieldNames) {
       if (fields == null) {
         fields = new ArrayList<>();
         for (String fieldName : fieldNames) {
@@ -665,7 +657,7 @@ public interface Meta {
           }
         }
       }
-      return new CursorFactory(style, resultClass, fields, fieldNames);
+      return new CursorFactory(Style.RECORD, resultClass, fields, fieldNames);
     }
 
     public static CursorFactory map(List<String> fieldNames) {
@@ -692,7 +684,7 @@ public interface Meta {
           && !resultClazz.getName().endsWith("MetaTable")) {
         return ARRAY;
       }
-      return record(Style.RECORD, resultClazz, null,
+      return record(resultClazz, null,
           columns.stream().map(c -> c.columnName).collect(Collectors.toList()));
     }
 
@@ -745,7 +737,6 @@ public interface Meta {
   enum Style {
     OBJECT,
     RECORD,
-    RECORD_PROJECTION,
     ARRAY,
     LIST,
     MAP;
