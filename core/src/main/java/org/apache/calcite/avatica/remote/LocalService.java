@@ -97,20 +97,24 @@ public class LocalService implements Service {
 
     if (resultSet.firstFrame != null) {
       list = list(resultSet.firstFrame.rows);
-      switch (cursorFactory.style) {
-      case ARRAY:
+      if (list.isEmpty()) {
         cursorFactory = Meta.CursorFactory.LIST;
-        break;
-      case MAP:
-      case LIST:
-        break;
-      case RECORD:
-        cursorFactory = Meta.CursorFactory.LIST;
-        break;
-      default:
-        cursorFactory = Meta.CursorFactory.map(cursorFactory.fieldNames);
+      } else {
+        switch (cursorFactory.style) {
+        case ARRAY:
+          cursorFactory = Meta.CursorFactory.LIST;
+          break;
+        case MAP:
+        case LIST:
+          break;
+        case RECORD:
+          cursorFactory = Meta.CursorFactory.map(cursorFactory.fieldNames);
+          break;
+        default:
+          throw new IllegalStateException("Unknown cursor factory style: "
+              + cursorFactory.style);
+        }
       }
-
       final boolean done = resultSet.firstFrame.done;
 
       frame = new Meta.Frame(0, done, list);
