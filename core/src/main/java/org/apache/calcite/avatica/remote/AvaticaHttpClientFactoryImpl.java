@@ -162,7 +162,8 @@ public class AvaticaHttpClientFactoryImpl implements AvaticaHttpClientFactory {
     try {
       // Ensure that the given class is actually a subclass of AvaticaHttpClient
       Class<? extends AvaticaHttpClient> clz =
-          Class.forName(className).asSubclass(AvaticaHttpClient.class);
+          Class.forName(className, false, AvaticaHttpClientFactoryImpl.class.getClassLoader())
+              .asSubclass(AvaticaHttpClient.class);
       Constructor<? extends AvaticaHttpClient> constructor = clz.getConstructor(URL.class);
       client = constructor.newInstance(Objects.requireNonNull(url));
     } catch (Exception e) {

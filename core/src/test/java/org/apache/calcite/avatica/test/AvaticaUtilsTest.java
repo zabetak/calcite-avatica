@@ -44,6 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 /**
@@ -95,8 +96,8 @@ public class AvaticaUtilsTest {
       fail("expected error, got " + s2);
     } catch (Throwable e) {
       assertThat(e.getMessage(),
-          is("Property 'java.math.BigInteger#ONE' not valid as "
-              + "cannot convert java.math.BigInteger to java.lang.String"));
+          is("Property 'java.math.BigInteger#ONE' not valid "
+              + "for plugin type java.lang.String"));
     }
 
     // No default constructor or INSTANCE member
@@ -141,8 +142,7 @@ public class AvaticaUtilsTest {
     } catch (Throwable e) {
       assertThat(e.getMessage(),
           is("Property 'org.apache.calcite.avatica.test.AvaticaUtilsTest"
-              + "#STRING_THREAD_LOCAL' not valid as cannot convert java.lang.String "
-              + "to java.lang.Integer"));
+              + "#STRING_THREAD_LOCAL' not valid for plugin type java.lang.Integer"));
     } finally {
       STRING_THREAD_LOCAL.remove();
     }
@@ -158,8 +158,7 @@ public class AvaticaUtilsTest {
     } catch (Throwable e) {
       assertThat(e.getMessage(),
           is("Property 'org.apache.calcite.avatica.test.AvaticaUtilsTest"
-              + "#STRING_THREAD_LOCAL' not valid as cannot convert "
-              + "java.lang.String to java.math.BigDecimal[]"));
+              + "#STRING_THREAD_LOCAL' not valid for plugin type [Ljava.math.BigDecimal;"));
     } finally {
       STRING_THREAD_LOCAL.remove();
     }
@@ -175,9 +174,8 @@ public class AvaticaUtilsTest {
     } catch (Throwable e) {
       assertThat(e.getMessage(),
           is("Property 'org.apache.calcite.avatica.test.AvaticaUtilsTest"
-              + "#STRING_THREAD_LOCAL' not valid as cannot convert "
-              + "java.lang.String to "
-              + "org.apache.calcite.avatica.test.AvaticaUtilsTest.Weight"));
+              + "#STRING_THREAD_LOCAL' not valid for plugin type "
+              + "org.apache.calcite.avatica.test.AvaticaUtilsTest$Weight"));
     } finally {
       STRING_THREAD_LOCAL.remove();
     }
@@ -192,8 +190,7 @@ public class AvaticaUtilsTest {
     } catch (Throwable e) {
       assertThat(e.getMessage(),
           is("Property 'org.apache.calcite.avatica.test.AvaticaUtilsTest"
-              + "#STRING_THREAD_LOCAL' not valid as cannot convert "
-              + "java.lang.String to float"));
+              + "#STRING_THREAD_LOCAL' not valid for plugin type float"));
     } finally {
       STRING_THREAD_LOCAL.remove();
     }
@@ -208,11 +205,36 @@ public class AvaticaUtilsTest {
     } catch (Throwable e) {
       assertThat(e.getMessage(),
           is("Property 'org.apache.calcite.avatica.test.AvaticaUtilsTest"
-              + "#FLOAT_THREAD_LOCAL' not valid as cannot convert "
-              + "java.lang.Float to float"));
+              + "#FLOAT_THREAD_LOCAL' not valid for plugin type float"));
     } finally {
       FLOAT_THREAD_LOCAL.remove();
     }
+  }
+
+  @Test public void testInstantiatePluginViaConstructorWithUnloadedClass() {
+    RuntimeException e = assertThrows(RuntimeException.class,
+        () -> AvaticaUtils.instantiatePlugin(Integer.class,
+            "org.apache.calcite.avatica.InvalidStaticInitializer"));
+    assertThat(e.getMessage(), is("Property 'org.apache.calcite.avatica.InvalidStaticInitializer' "
+        + "not valid for plugin type java.lang.Integer"));
+  }
+
+  @Test public void testInstantiatePluginViaNamedFieldWithUnloadedClass() {
+    RuntimeException e = assertThrows(RuntimeException.class,
+        () -> AvaticaUtils.instantiatePlugin(Integer.class,
+            "org.apache.calcite.avatica.InvalidStaticInitializerWithStaticField#FIELD_A"));
+    assertThat(e.getMessage(),
+        is("Property 'org.apache.calcite.avatica.InvalidStaticInitializerWithStaticField#FIELD_A' "
+            + "not valid for plugin type java.lang.Integer"));
+  }
+
+  @Test public void testInstantiatePluginViaINSTANCEFieldWithUnloadedClass() {
+    RuntimeException e = assertThrows(RuntimeException.class,
+        () -> AvaticaUtils.instantiatePlugin(Integer.class,
+            "org.apache.calcite.avatica.InvalidStaticInitializerWithInstanceField"));
+    assertThat(e.getMessage(),
+        is("Property 'org.apache.calcite.avatica.InvalidStaticInitializerWithInstanceField' "
+            + "not valid for plugin type java.lang.Integer"));
   }
 
   /** Unit test for

@@ -722,7 +722,7 @@ public interface Meta {
 
       if (proto.hasField(CLASS_NAME_DESCRIPTOR)) {
         try {
-          clz = Class.forName(proto.getClassName());
+          clz = Class.forName(proto.getClassName(), false, CursorFactory.class.getClassLoader());
         } catch (ClassNotFoundException e) {
           throw new RuntimeException(e);
         }

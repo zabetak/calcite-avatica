@@ -39,6 +39,7 @@ import static org.apache.calcite.avatica.remote.BearerTokenProviderFactoryTest.T
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class BearerTokenProviderFactoryTest {
@@ -123,13 +124,14 @@ public class BearerTokenProviderFactoryTest {
   }
 
 
-  @Test(expected = RuntimeException.class)
-  public void testInvalidBearerToken() throws Exception {
+  @Test
+  public void testInvalidBearerToken() {
     Properties props = new Properties();
-    props.setProperty(BuiltInConnectionProperty.HTTP_CLIENT_IMPL.name(),
-            Properties.class.getName()); // Properties is intentionally *not* a valid class
+    props.setProperty(BuiltInConnectionProperty.TOKEN_PROVIDER_CLASS.name(),
+        "org.apache.calcite.avatica.InvalidStaticInitializer");
     ConnectionConfig config = new ConnectionConfigImpl(props);
-    BearerTokenProviderFactory.getBearerTokenProvider(config);
+    assertThrows(RuntimeException.class,
+        () -> BearerTokenProviderFactory.getBearerTokenProvider(config));
   }
 
   public static class TestTokenProvider implements BearerTokenProvider {

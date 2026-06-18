@@ -25,6 +25,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
@@ -229,10 +231,13 @@ public class AvaticaUtils {
         int i = className.indexOf('#');
         left = className.substring(0, i);
         right = className.substring(i + 1);
-        //noinspection unchecked
-        final Class<T> clazz = (Class) Class.forName(left);
+        final Class<?> clazz = Class.forName(left, false, AvaticaUtils.class.getClassLoader());
         final Field field;
         field = clazz.getField(right);
+        if (!isValidPluginField(field, pluginClass)) {
+          throw new RuntimeException(
+              "Property '" + className + "' not valid for plugin type " + pluginClass.getName());
+        }
         final Object fieldValue = field.get(null);
         if (fieldValue instanceof ThreadLocal) {
           value = ((ThreadLocal<?>) fieldValue).get();
@@ -241,12 +246,13 @@ public class AvaticaUtils {
         }
         return pluginClass.cast(value);
       }
-      //noinspection unchecked
-      final Class<T> clazz = (Class) Class.forName(className);
+      final Class<?> clazz = Class.forName(className, false, AvaticaUtils.class.getClassLoader());
       try {
-        // We assume that if there is an INSTANCE field it is static and
-        // has the right type.
         final Field field = clazz.getField("INSTANCE");
+        if (!isValidPluginField(field, pluginClass)) {
+          throw new RuntimeException(
+              "Property '" + className + "' not valid for plugin type " + pluginClass.getName());
+        }
         value = field.get(null);
         return pluginClass.cast(value);
       } catch (NoSuchFieldException e) {
@@ -256,7 +262,7 @@ public class AvaticaUtils {
         throw new RuntimeException("Property '" + className
             + "' not valid for plugin type " + pluginClass.getName());
       }
-      return clazz.getConstructor().newInstance();
+      return pluginClass.cast(clazz.getConstructor().newInstance());
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Property '" + className
           + "' not valid as '" + className + "' not found in the classpath", e);
@@ -278,6 +284,29 @@ public class AvaticaUtils {
       throw new RuntimeException("Property '" + className
           + "' not valid. The exception info here : " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Returns whether the specified field is valid for the instantiation of a plugin.
+   * <p> The field is valid if it can be assigned directly to the expected {@code clazz} type or,
+   * it is a {@link ThreadLocal} with a parameterized type that can be assigned {@code clazz}.
+   * @param field the field to check for validity
+   * @param clazz the expected type after the instantiation of the plugin
+   * @return whether the specified field is valid for the instantiation of a plugin.
+   */
+  private static boolean isValidPluginField(Field field, Class<?> clazz) {
+    if (clazz.isAssignableFrom(field.getType())) {
+      return true;
+    }
+    if (ThreadLocal.class.isAssignableFrom(field.getType())) {
+      Type genericType = field.getGenericType();
+      if (genericType instanceof ParameterizedType) {
+        Type[] types = ((ParameterizedType) genericType).getActualTypeArguments();
+        return types.length == 1 && types[0] instanceof Class && clazz.isAssignableFrom(
+            (Class<?>) types[0]);
+      }
+    }
+    return false;
   }
 
   /** Reads the contents of an input stream and returns as a string. */

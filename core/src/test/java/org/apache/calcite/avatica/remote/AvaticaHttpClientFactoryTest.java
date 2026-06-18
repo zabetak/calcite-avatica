@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Properties;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -57,16 +58,15 @@ public class AvaticaHttpClientFactoryTest {
         client instanceof AvaticaHttpClientImpl);
   }
 
-  @Test(expected = RuntimeException.class) public void testInvalidHttpClient() throws Exception {
+  @Test public void testInvalidHttpClient() throws Exception {
     Properties props = new Properties();
     props.setProperty(BuiltInConnectionProperty.HTTP_CLIENT_IMPL.name(),
-        Properties.class.getName()); // Properties is intentionally *not* a valid class
+        "org.apache.calcite.avatica.InvalidStaticInitializer");
     URL url = new URI("http://localhost:8765").toURL();
     ConnectionConfig config = new ConnectionConfigImpl(props);
     AvaticaHttpClientFactory httpClientFactory = new AvaticaHttpClientFactoryImpl();
 
-    // This should throw since the Properties class is invalid
-    httpClientFactory.getClient(url, config, null);
+    assertThrows(RuntimeException.class, () -> httpClientFactory.getClient(url, config, null));
   }
 }
 

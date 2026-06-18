@@ -44,7 +44,8 @@ public class BearerTokenProviderFactory {
 
     try {
       Class<? extends BearerTokenProvider> clz =
-              Class.forName(className).asSubclass(BearerTokenProvider.class);
+          Class.forName(className, false, BearerTokenProviderFactory.class.getClassLoader())
+              .asSubclass(BearerTokenProvider.class);
       Constructor<? extends BearerTokenProvider> constructor = clz.getConstructor();
       tokenProvider = constructor.newInstance();
     } catch (Exception e) {
